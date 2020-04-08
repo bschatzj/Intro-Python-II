@@ -1,6 +1,9 @@
 from room import Room
+from player import Player
+import sys
 
 # Declare all the rooms
+
 
 room = {
     'outside':  Room("Outside Cave Entrance",
@@ -21,8 +24,25 @@ chamber! Sadly, it has already been completely emptied by
 earlier adventurers. The only exit is to the south."""),
 }
 
-
 # Link rooms together
+
+
+class NoRoomThatDirection(Exception):
+    pass
+
+
+def change_rooms(move):
+    try:
+        attr = move+"_to"
+
+        if getattr(player.room, attr, 'error') == 'error':
+            raise NoRoomThatDirection
+
+        player.room = getattr(player.room, attr)
+
+    except NoRoomThatDirection:
+        print("There's nowhere to go in that direction, try another direction.")
+
 
 room['outside'].n_to = room['foyer']
 room['foyer'].s_to = room['outside']
@@ -39,6 +59,12 @@ room['treasure'].s_to = room['narrow']
 
 # Make a new player object that is currently in the 'outside' room.
 
+
+print("Please enter name")
+name = input()
+player = Player(name, room['outside'])
+print(player.room.description)
+
 # Write a loop that:
 #
 # * Prints the current room name
@@ -49,3 +75,48 @@ room['treasure'].s_to = room['narrow']
 # Print an error message if the movement isn't allowed.
 #
 # If the user enters "q", quit the game.
+
+
+while(True):
+    movement = False
+
+    print(player.room.name)
+    player.room.print_description()
+    player.print_items()
+
+    print('What would you like to do?')
+    move = input().lower()
+
+
+    if move.split(' ')[0] == 'grab':
+        item = move[4:]
+        if item in player.room.items:
+            player.items.append(item)
+            player.room.items.remove(item)
+            print(f'You have picked up the {item}.')
+            movement = True
+
+    elif move.split(' ')[0] == 'drop':
+        item = move[5:]
+        if item in player.items:
+            player.room.items.append(item)
+            player.items.remove(item)
+            movement = True
+            print(f'You have dropped the {item}.')
+        else:
+            print('You have no items to drop')
+
+    # defining remaining valid moves
+    directions = ['n', 's', 'e', 'w']
+
+    # if player entered a direction, move to the room in that direction
+    if move in directions:
+        change_rooms(move)
+        movement = True
+
+    if move == 'q':
+        print('Thanks for playing!')
+        sys.exit()
+
+    if movement == False:
+        print("Not Valid move")
